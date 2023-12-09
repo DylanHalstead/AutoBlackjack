@@ -12,9 +12,31 @@ while capture.isOpened():
     results = model.track(frame, persist=True, verbose=False)
     annotated_frame = results[0].plot()
     result = results[0].cpu().boxes
-    detect_xyxy = result.xyxy.tolist() if result.xyxy is not None else []
 
+    names = model.names
+    detect_xyxy = result.xyxy.tolist() if result.xyxy is not None else []
     card_positions = [box for box in detect_xyxy]
+
+    # Dictionary to store bounding box coordinates by class name
+    class_bbox_dict = {}
+    for c, bbox in zip(result.cls, detect_xyxy):
+      class_id = int(c)
+      class_name = names[class_id]
+      if class_name not in class_bbox_dict:
+        class_bbox_dict[class_name] = []
+      
+      # Extracting bounding box coordinates
+      x1, y1, x2, y2 = bbox
+      top_left = {'x': x1, 'y': y1}
+      bottom_right = {'x': x2, 'y': y2}
+      bbox_dict = {'top_left': top_left, 'bottom_right': bottom_right}
+      
+      # Appending the bbox dictionary to the list for the class
+      class_bbox_dict[class_name].append(bbox_dict)
+
+    # Printing the dictionary
+    for class_name, bboxes in class_bbox_dict.items():
+      print(f"Class: {class_name}, BBox: {bboxes}")
 
     proximity_threshold = 400
     grouped_hands = []
