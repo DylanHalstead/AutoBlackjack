@@ -34,37 +34,36 @@ while capture.isOpened():
       # Appending the bbox dictionary to the list for the class
       class_bbox_dict[class_name].append(bbox_dict)
 
-    # Printing the dictionary
-    for class_name, bboxes in class_bbox_dict.items():
-      print(f"Class: {class_name}, BBox: {bboxes}")
-
+    # Proximity threshold and grouping cards based on proximity
     proximity_threshold = 400
     grouped_hands = []
     assigned = set()
 
-    for i, card1 in enumerate(card_positions):
-      if i not in assigned:
-        hand = [card1]
-        assigned.add(i)
+    for class_name, positions in class_bbox_dict.items():
+      for i, card1 in enumerate(positions):
+        if i not in assigned:
+          hand = [card1]
+          assigned.add(i)
 
-        for j, card2 in enumerate(card_positions[i + 1:]):
-          if np.linalg.norm(np.array(card1)[:2] - np.array(card2)[:2]) < proximity_threshold:
-            hand.append(card2)
-            assigned.add(j)
+          for j, card2 in enumerate(positions[i + 1:]):
+            # Calculate Euclidean distance between top-left coordinates
+            dist = np.linalg.norm(np.array(list(card1['top_left'].values())) - np.array(list(card2['top_left'].values())))
+            if dist < proximity_threshold:
+              hand.append(card2)
+              assigned.add(j)
 
-        grouped_hands.append(hand)
+          grouped_hands.append(hand)
 
     # Drawing bounding boxes around grouped cards
     for hand in grouped_hands:
       if len(hand) > 1:
-        x_coords = [card[0] for card in hand]
-        y_coords = [card[1] for card in hand]
+        x_coords = [card['top_left']['x'] for card in hand]
+        y_coords = [card['top_left']['y'] for card in hand]
 
         x_min = min(x_coords)
         y_min = min(y_coords)
-        x_max = max(x_coords)
-        y_max = max(y_coords)
-        # print("Card: " + str(hand[0]))
+        x_max = max([card['bottom_right']['x'] for card in hand])
+        y_max = max([card['bottom_right']['y'] for card in hand])
 
         cv2.rectangle(annotated_frame, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (0, 255, 0), 2)
 
