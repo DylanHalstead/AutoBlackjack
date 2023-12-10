@@ -61,7 +61,9 @@ while capture.isOpened():
       card_list.append(card)
     card_list.sort(key=lambda card: card.top_left['x'])
 
-    proximity_threshold = 300
+    # use picture width to determine proximity threshold
+    width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+    proximity_threshold = width / 3
     grouped_hands = []
     assigned = set()
     # For every card in the list, check if it is close to another card
