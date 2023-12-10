@@ -58,7 +58,8 @@ while capture.isOpened():
 
     card_list = []
     for card in current_hand.cards:
-      card_list.append(card)
+      if card.card_string not in [card.card_string for card in card_list]:
+        card_list.append(card)
     card_list.sort(key=lambda card: card.top_left['x'])
 
     # use picture width to determine proximity threshold
