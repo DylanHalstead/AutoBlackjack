@@ -35,22 +35,42 @@ while capture.isOpened():
       class_bbox_dict[class_name].append(card)
 
     # Proximity threshold used for grouping cards
-    proximity_threshold = 400
+    # proximity_threshold = 400
     grouped_hands = []
-    assigned = set()
+    empty_hand = []
+    # assigned = set()
+    dealer = None
 
     # For every type of card found, i.e. QD, KH, etc, 
     current_hand = Hand([])
     for class_name, positions in class_bbox_dict.items():
       if len(positions) > 0:
         for position in enumerate(positions):
-          print(f"Located {position[1].card_string} at {position[1]}")
+          # If the card is higher than Dealer, assign it to Dealer and add dealer back to hand
+          print(f"Located {position[1]}")
           current_hand.add_card(position[1])
-        grouped_hands.append(current_hand)
+          if dealer is not None:
+            if position[1].top_left['y'] < dealer.top_left['y']:
+              current_hand.add_card(dealer)
+              current_hand.remove_card(position[1])
+              dealer = position[1]
+            # Ensure the Dealer card is not in the hand if it identifies both corners of Dealer
+            for card_in_hand in current_hand.cards:
+              if card_in_hand.card_string == dealer.card_string:
+                current_hand.remove_card(card_in_hand)
+          else:
+            current_hand.remove_card(position[1])
+            dealer = position[1]
 
-    # temp static dealer
-    dealer_hand = Hand([Card('7D', 0, 0)])
-
+    if dealer is not None:
+      print(f"Dealer: {dealer}")
+      if len(current_hand.cards) > 0:
+          print(f"Best Action: {current_hand.calculate_best_action(dealer)}")
+      else: 
+        print("No hand found")
+    else:
+      print("No cards found")
+      
     for hand in grouped_hands:
       # draw a bounding box around the grouped cards
       cards = hand.cards
@@ -63,7 +83,7 @@ while capture.isOpened():
       y_max = max([card.bottom_right['y'] for card in cards])
 
       cv2.rectangle(annotated_frame, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (0, 255, 0), 2)
-      cv2.putText(annotated_frame, hand.calculate_best_action(dealer_hand.cards[0]), (int(x_min), int(y_min)-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+      cv2.putText(annotated_frame, hand.calculate_best_action(dealer), (int(x_min), int(y_min)-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
     cv2.imshow('Cards', annotated_frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
