@@ -41,6 +41,7 @@ decision_table = {
     16: {2: 'split', 3: 'split', 4: 'split', 5: 'split', 6: 'split', 7: 'split', 8: 'split', 9: 'split', 10: 'split', 'A': 'split'},
     18: {2: 'split', 3: 'split', 4: 'split', 5: 'split', 6: 'split', 7: 'stand', 8: 'split', 9: 'split', 10: 'stand', 'A': 'stand'},
     20: {2: 'stand', 3: 'stand', 4: 'stand', 5: 'stand', 6: 'stand', 7: 'stand', 8: 'stand', 9: 'stand', 10: 'stand', 'A': 'stand'},
+    22: {2: 'split', 3: 'split', 4: 'split', 5: 'split', 6: 'split', 7: 'split', 8: 'split', 9: 'split', 10: 'split', 'A': 'split'},
   }
 }
 
@@ -57,6 +58,8 @@ class Hand:
   def get_sum(self):
     hand_sum = 0
     for card in self.cards:
+      # print(f"get_sum: Card: {card}")
+      # print(f"get_sum: Summing up value: {card.value}")
       hand_sum += card.value
     return hand_sum
   
@@ -66,11 +69,40 @@ class Hand:
         return True
     return False
   
+  def drop_ace(self):
+    for card in self.cards:
+      if card.value == 11:
+        card.value = 1
+        return True
+    return False
+  
   def is_pair(self):
     return len(self.cards) == 2 and self.cards[0].value == self.cards[1].value
   
   def calculate_best_action(self, dealer_up_card: Card):
-    pass
+    hand_sum = self.get_sum()
+    if hand_sum == 21:
+      return 'blackjack'
+    elif hand_sum < 5:
+      return 'hit'
+    elif self.is_pair():
+      return decision_table['pair'][hand_sum][int(dealer_up_card.value_string)]
+    elif self.is_soft():
+      if hand_sum < 13:
+        return 'ERROR: Likely only one ace. Hit'
+      # Check for busting with aces, if bust, drop the value of the ace to a 1 and recalculate as a hard hand
+      if hand_sum > 21:
+        # print("Dropping an ace...")
+        self.drop_ace()
+        return self.calculate_best_action(dealer_up_card)
+        # return decision_table['hard'][hand_sum][int(dealer_up_card.value_string)]
+      return decision_table['soft'][hand_sum][int(dealer_up_card.value_string)]
+    elif hand_sum > 21:
+      return 'bust'
+    elif not self.is_soft():
+      return decision_table['hard'][hand_sum][int(dealer_up_card.value_string)]
+    else:
+      return 'ERROR'
 
   def __str__(self) -> str:
     return f"Hand: {self.cards}"
