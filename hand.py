@@ -55,6 +55,9 @@ class Hand:
   def add_card(self, card: Card):
     self.cards.append(card)
 
+  def remove_card(self, card: Card):
+    self.cards.remove(card)
+
   def get_sum(self):
     hand_sum = 0
     for card in self.cards:
@@ -81,12 +84,13 @@ class Hand:
   
   def calculate_best_action(self, dealer_up_card: Card):
     hand_sum = self.get_sum()
+    print(f"Hand Sum: {hand_sum}")
     if hand_sum == 21:
       return 'blackjack'
     elif hand_sum < 5:
       return 'hit'
     elif self.is_pair():
-      return decision_table['pair'][hand_sum][int(dealer_up_card.value_string)]
+      return decision_table['pair'][hand_sum][dealer_up_card.value]
     elif self.is_soft():
       if hand_sum < 13:
         return 'ERROR: Likely only one ace. Hit'
@@ -96,11 +100,11 @@ class Hand:
         self.drop_ace()
         return self.calculate_best_action(dealer_up_card)
         # return decision_table['hard'][hand_sum][int(dealer_up_card.value_string)]
-      return decision_table['soft'][hand_sum][int(dealer_up_card.value_string)]
+      return decision_table['soft'][hand_sum][dealer_up_card.value]
     elif hand_sum > 21:
       return 'bust'
     elif not self.is_soft():
-      return decision_table['hard'][hand_sum][int(dealer_up_card.value_string)]
+      return decision_table['hard'][hand_sum][dealer_up_card.value]
     else:
       return 'ERROR'
 
