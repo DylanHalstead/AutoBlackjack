@@ -46,9 +46,6 @@ decision_table = {
 }
 
 class Hand:
-  def __init__(self):
-    self.cards = []
-  
   def __init__(self, cards: list[Card]):
     self.cards = cards
 
