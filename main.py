@@ -34,14 +34,8 @@ while capture.isOpened():
       card = Card(class_name, top_left, bottom_right)
       class_bbox_dict[class_name].append(card)
 
-    # Proximity threshold used for grouping cards
-    # proximity_threshold = 400
-    grouped_hands = []
-    empty_hand = []
-    # assigned = set()
-    dealer = None
-
     # For every type of card found, i.e. QD, KH, etc, 
+    dealer = None
     current_hand = Hand([])
     for class_name, positions in class_bbox_dict.items():
       if len(positions) > 0:
@@ -62,14 +56,27 @@ while capture.isOpened():
             current_hand.remove_card(position[1])
             dealer = position[1]
 
-    if dealer is not None:
-      print(f"Dealer: {dealer}")
-      if len(current_hand.cards) > 0:
-          print(f"Best Action: {current_hand.calculate_best_action(dealer)}")
-      else: 
-        print("No hand found")
-    else:
-      print("No cards found")
+    card_list = []
+    for card in current_hand.cards:
+      card_list.append(card)
+    card_list.sort(key=lambda card: card.top_left['x'])
+
+    proximity_threshold = 300
+    grouped_hands = []
+    assigned = set()
+    # For every card in the list, check if it is close to another card
+    for card in card_list:
+      if card in assigned:
+        continue
+      current_hand = Hand([card])
+      assigned.add(card)
+      for other_card in card_list:
+        if other_card in assigned:
+          continue
+        if abs(card.top_left['x'] - other_card.top_left['x']) < proximity_threshold:
+          current_hand.add_card(other_card)
+          assigned.add(other_card)
+      grouped_hands.append(current_hand)
       
     for hand in grouped_hands:
       # draw a bounding box around the grouped cards
